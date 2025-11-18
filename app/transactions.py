@@ -1,51 +1,55 @@
-from pathlib import Path
-import json
-from datetime import date, datetime
+from .db import get_conn
+from datetime import datetime
+from typing import List, Dict
 
-DATA_FILE = Path("data/transactions.json")
-DATA_FILE.parent.mkdir(exist_ok=True)
+def add_transaction(amount: float, category: str, ttype: str, date_str: str, note: str = ""):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute(
+        "INSERT INTO transactions (amount, category, type, date, note) VALUES (?, ?, ?, ?, ?)",
+        (float(amount), category, ttype, date_str, note)
+    )
+    conn.commit()
+    conn.close()
 
-def load_transactions():
-    if DATA_FILE.exists():
-        with open(DATA_FILE, "r") as f:
-            return json.load(f)
-    return []
+def get_transactions(limit: int = 500) -> List[Dict]:
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM transactions ORDER BY date DESC, id DESC LIMIT ?", (limit,))
+    rows = [dict(r) for r in cur.fetchall()]
+    conn.close()
+    return rows
 
-def save_transactions(transactions):
-    with open(DATA_FILE, "w") as f:
-        json.dump(transactions, f, indent=4, default=str)
+def get_transactions_for_month(year: int, month: int):
+    conn = get_conn()
+    cur = conn.cursor()
+    start = f"{year:04d}-{month:02d}-01"
+    # naive end: next month first day
+    if month == 12:
+        end = f"{year+1:04d}-01-01"
+    else:
+        end = f"{year:04d}-{month+1:02d}-01"
+    cur.execute("""
+        SELECT * FROM transactions
+        WHERE date >= ? AND date < ?
+        ORDER BY date ASC
+    """, (start, end))
+    rows = [dict(r) for r in cur.fetchall()]
+    conn.close()
+    return rows
 
-def add_transaction(amount, category, trans_type, trans_date=None):
-    transactions = load_transactions()
-    if trans_date is None:
-        trans_date = date.today().isoformat()
-    # allow supplied date string or object
-    if isinstance(trans_date, (datetime, date)):
-        trans_date = trans_date.isoformat()
-    transactions.append({
-        "amount": float(amount),
-        "category": category,
-        "type": trans_type,  # 'Income' or 'Expense'
-        "date": trans_date
-    })
-    save_transactions(transactions)
-
-def get_summary_for_month(year:int, month:int):
-    """Return (income, expense, balance) for a given year/month."""
-    transactions = load_transactions()
-    income = 0.0
-    expense = 0.0
-    for t in transactions:
-        d = datetime.fromisoformat(t["date"])
-        if d.year == year and d.month == month:
-            if t["type"] == "Income":
-                income += t["amount"]
-            else:
-                expense += t["amount"]
+def get_summary_for_month(year: int, month: int):
+    rows = get_transactions_for_month(year, month)
+    income = sum(r["amount"] for r in rows if r["type"] == "Income")
+    expense = sum(r["amount"] for r in rows if r["type"] == "Expense")
     return income, expense, income - expense
 
 def get_overall_summary():
-    transactions = load_transactions()
-    income = sum(t["amount"] for t in transactions if t["type"]=="Income")
-    expense = sum(t["amount"] for t in transactions if t["type"]=="Expense")
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT SUM(amount) as s FROM transactions WHERE type = 'Income'")
+    income = cur.fetchone()["s"] or 0.0
+    cur.execute("SELECT SUM(amount) as s FROM transactions WHERE type = 'Expense'")
+    expense = cur.fetchone()["s"] or 0.0
+    conn.close()
     return income, expense, income - expense

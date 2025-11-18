@@ -212,5 +212,5 @@ __pycache__/
 venv/
 .env
 .vscode/
-data/*.json
+data/finance.db
 .DS_Store
