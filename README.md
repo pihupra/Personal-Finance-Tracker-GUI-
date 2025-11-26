@@ -84,3 +84,6 @@ Simple enough for beginners, practical enough for daily real-world use.
 <img width="1440" height="900" alt="Screenshot 2025-11-18 at 7 10 00 PM" src="https://github.com/user-attachments/assets/4d11a7b5-9d06-4e1a-a55f-dce3b9aaadeb" />
 <img width="1440" height="900" alt="Screenshot 2025-11-18 at 7 10 02 PM" src="https://github.com/user-attachments/assets/78403cbc-8213-4a91-94d0-d2ef8bdd00c5" />
 <img width="1440" height="900" alt="Screenshot 2025-11-18 at 7 10 04 PM" src="https://github.com/user-attachments/assets/8afc1bbb-f221-4987-8830-261cd49bab25" />
+
+<img width="1440" height="900" alt="Screenshot 2025-11-26 at 7 16 47 PM" src="https://github.com/user-attachments/assets/ab0a7df6-82a6-47b6-848c-d344f3d2ca43" />
+
